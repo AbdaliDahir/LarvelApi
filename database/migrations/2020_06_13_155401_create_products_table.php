@@ -19,9 +19,9 @@ class CreateProductsTable extends Migration
             $table->string('name');
             $table->string('description', 1000);
             $table->integer('quantity')->unsigned();
-            $table->string('status')->default(Product::AVAILABLE_PRODUCT);
+            $table->string('status')->default(Product::UNAVAILABLE_PRODUCT);
             $table->string('image');
-            $table->integer('seller_id')->unsigned();
+            $table->bigInteger('seller_id')->unsigned();
             $table->timestamps();
             //ForeignKey -- it's users table Name not model
             $table->foreign('seller_id')->references('id')->on('users');
