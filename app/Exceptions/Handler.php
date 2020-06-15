@@ -2,11 +2,22 @@
 
 namespace App\Exceptions;
 
+use App\Traits\ApiResponser;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
 {
+    use ApiResponser;
+
     /**
      * A list of the exception types that are not reported.
      *
@@ -50,6 +61,91 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
-        return parent::render($request, $exception);
+        if($exception instanceof ValidationException) {
+            return $this->convertValidationExceptionToResponse($exception, $request);
+        }
+
+        if($exception instanceof ModelNotFoundException) {
+            // without namespace APP//User  => user
+            $modelName = strtolower(class_basename($exception->getModel())); 
+            return $this->errorResponse("Model {$modelName} does not exist", 404);
+        }
+
+        // Handle Authentication 
+        if($exception instanceof AuthenticationException) {
+            return $this->unauthenticated($request, $exception);
+        }
+
+        //handle Authorization
+        if($exception instanceof AuthorizationException) { 
+            return $this->errorResponse($exception->getMessage(), 403);
+        }
+
+        //handle Url Exception
+        if($exception instanceof MethodNotAllowedHttpException) { 
+            return $this->errorResponse("The specified method for requests is invalid", 404);
+        }
+
+        //handle Method not Allowed buyers  -> post
+        if($exception instanceof NotFoundHttpException) { 
+            return $this->errorResponse("The specified URL cannot be found", 403);
+        }
+
+        //All rets exception
+        if($exception instanceof QueryException) { 
+            $errorCode = $exception->errorInfo[1];
+
+            if($errorCode == 1451) {
+                return $this->errorResponse('Cannot delete or update a parent row -- This Resource is related with another resource', 409);
+            }
+            
+        }
+
+        //All rest exception
+        if($exception instanceof HttpException) { 
+            return $this->errorResponse($exception->getMessage(), $exception->getStatusCode());
+        }
+
+        if(config('app.debug')) {
+            return parent::render($request, $exception);
+        }
+
+        return $this->errorResponse('Unexpected Exeption. Try Later', 500);
     }
+
+    /**
+     * Convert an authentication exception into a response.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Auth\AuthenticationException  $exception
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        return $this->errorResponse($exception->getMessage(), 401);
+
+    }
+
+    /**
+     * Create a response object from the given validation exception.
+     *
+     * @param  \Illuminate\Validation\ValidationException  $e
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    protected function convertValidationExceptionToResponse(ValidationException $e, $request)
+    {
+        // if ($e->response) {
+        //     return $e->response;
+        // }
+
+        // $errors = $request->expectsJson()
+        //             ? $this->invalidJson($request, $e)
+        //             : $this->invalid($request, $e);
+
+        $errors = $e->validator->errors()->getMessages();
+
+        return $this->errorResponse($errors, 422);
+    }
+
 }
