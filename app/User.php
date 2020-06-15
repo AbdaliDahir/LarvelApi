@@ -45,6 +45,26 @@ class User extends Authenticatable
     ];
 
     /**
+    * Mutators -- methods inside models to modify attribute before to insert into db
+    * Modify original value
+    **/
+    public function setNameAttribute($name) {
+        $this->attributes['name'] = strtolower($name);
+    }
+
+    public function setEmailAttribute($email) {
+        $this->attributes['email'] = strtolower($email);
+    }
+
+    /**
+    * Accessor methods inside models to modify attribute after get it from db and before return it back
+    * not modify original value
+    **/
+    public function getNameAttribute($name) {
+        return ucwords($name);
+    }
+
+    /**
      * The attributes that should be cast to native types.
      *
      * @var array
