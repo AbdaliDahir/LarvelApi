@@ -3,9 +3,13 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
+    use softDeletes;
+    protected $dates = ['deleted_at'];
+    
 	const AVAILABLE_PRODUCT = 'available';
 	const UNAVAILABLE_PRODUCT = 'unavailable';
     //
@@ -22,7 +26,7 @@ class Product extends Model
     	return $this->status == Product::AVAILABLE_PRODUCT;
     }
 
-    // Relation Between Saller and Product
+    // Relation Between Seller and Product
     public function seller() {
     	return $this->belongsTo(Seller::class);
     }

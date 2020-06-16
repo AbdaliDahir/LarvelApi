@@ -25,6 +25,7 @@ class CreateProductsTable extends Migration
             $table->timestamps();
             //ForeignKey -- it's users table Name not model
             $table->foreign('seller_id')->references('id')->on('users');
+            $table->softDeletes();
         });
     }
 

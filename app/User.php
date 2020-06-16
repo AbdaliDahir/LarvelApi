@@ -3,13 +3,16 @@
 namespace App;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
-    use Notifiable;
+    
+
+    use Notifiable, softDeletes;
 
     const VERIFIED_USER = '0';
     const UNVERIFIED_USER = '1';
@@ -18,7 +21,8 @@ class User extends Authenticatable
     const REGULAR_USER = 'false';
 
     protected $table = 'users';
-
+    protected $dates = ['deleted_at'];
+    
     /**
      * The attributes that are mass assignable.
      *
