@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\ApiController;
+use App\Mail\UserCreated;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends ApiController
 {
@@ -105,7 +108,7 @@ class UserController extends ApiController
         if ($request->has('email') && $user->email != $request->email) {
             $user->verified = User::UNVERIFIED_USER;
             $user->verification_token = User::generateVerificationCode();
-            $user->email = $request->email();
+            $user->email = $request->email;
         }
 
         if ($request->has('password')) {
@@ -140,5 +143,40 @@ class UserController extends ApiController
         $user->delete();
 
         return $this->showOne($user);
+    }
+
+
+    /***
+    * User Verification 
+    ***/
+    public function verify($token) {
+        // search for user with token
+        $user = User::where('verification_token', $token)->firstOrFail();
+
+        //if exict
+        $user->verified = User::VERIFIED_USER;
+        $user->email_verified_at = Carbon::now();
+        $user->verification_token = null;
+
+        $user->save();
+
+        return $this->showMessage('Account has been verified successfully !!');
+
+    }
+
+    /**
+    ** resend Email Verification
+    **/
+    public function resend(User $user) {
+
+        if($user->isVerified()) {
+            return $this->showMessage('this Account already verified');
+        }
+
+        retry(5, function() use($user) {
+            Mail::to($user)->send(new UserCreated($user));
+        }, 1000);
+
+        return $this->showMessage('the verification email hass been resend');
     }
 }
