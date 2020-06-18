@@ -2,11 +2,14 @@
 
 namespace App;
 
+use App\Transformers\ProductTransformer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
+    public $transformer = ProductTransformer::class;
+
     use softDeletes;
     protected $dates = ['deleted_at'];
     
