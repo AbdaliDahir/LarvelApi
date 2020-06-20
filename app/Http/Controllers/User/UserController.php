@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\ApiController;
 use App\Mail\UserCreated;
+use App\Transformers\UserTransformer;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -11,6 +12,12 @@ use Illuminate\Support\Facades\Mail;
 
 class UserController extends ApiController
 {
+    public function __construct() {
+        $this->middleware('client.credentials')->only(['store', 'resend']);
+        $this->middleware('auth:api')->except(['store', 'resend', 'verify']);
+        //register middleware
+        $this->middleware('transform.input:' . UserTransformer::class)->only(['store', 'update']);
+    }
     /**
      * Display a listing of the resource.
      *
@@ -21,16 +28,6 @@ class UserController extends ApiController
         //
         $users = User::all();
         return $this->showAll($users);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
     }
 
     /**
@@ -45,7 +42,7 @@ class UserController extends ApiController
         $rules = [
             'name' => 'required',
             'email' => 'required|email|unique:users',
-            'password' => 'required|confirmed|min:6'
+            'password' => 'required|between:8,100',
         ];
 
         $this->validate($request, $rules);
@@ -73,16 +70,6 @@ class UserController extends ApiController
         return $this->showOne($user);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
@@ -97,7 +84,7 @@ class UserController extends ApiController
         // $user = User::findOrFail($id);
         $rules = [
             'email' => 'email|unique:users,email,' . $user->id,
-            'pasword' => 'min:6|confirmed',
+            'password' => 'min:6|confirmed',
             'admin' => 'in:' . User::ADMIN_USER . ',' . User::REGULAR_USER,
         ];
 

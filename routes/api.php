@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Route;
 Route::resource('users', 'User\UserController', ['except' => ['create', 'edit']]);
 Route::name('verify')->get('users/verify/{token}', 'User\UserController@verify');
 Route::name('resend')->get('users/{user}/resend', 'User\UserController@resend');
+
 /**
 * Buyers
 **/
@@ -68,3 +69,7 @@ Route::resource('products.buyers.transactions', 'Product\ProductBuyerTransaction
 Route::resource('transactions', 'transaction\TransactionController', ['only' => ['index', 'show']]);
 Route::resource('transactions.categories','transaction\TransactionCategoryController',['only' => ['index']]);
 Route::resource('transactions.sellers', 'transaction\TransactionSellerController', ['only' => ['index']]);
+
+
+/*** Oauth ***/
+Route::post('oauth/token', '\Laravel\Passport\Http\Controllers\AccessTokenController@issueToken');
