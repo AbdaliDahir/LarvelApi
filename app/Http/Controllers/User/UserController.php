@@ -17,6 +17,12 @@ class UserController extends ApiController
         $this->middleware('auth:api')->except(['store', 'resend', 'verify']);
         //register middleware
         $this->middleware('transform.input:' . UserTransformer::class)->only(['store', 'update']);
+
+        $this->middleware('scope:manage-account')->only(['show', 'update']);
+
+        $this->middleware('can:view,user')->only('show');
+        $this->middleware('can:update,user')->only('update');
+        $this->middleware('can:delete,user')->only('destroy');
     }
     /**
      * Display a listing of the resource.
@@ -25,7 +31,8 @@ class UserController extends ApiController
      */
     public function index()
     {
-        //
+        $this->allowAdminActions();
+
         $users = User::all();
         return $this->showAll($users);
     }
@@ -80,7 +87,8 @@ class UserController extends ApiController
      */
     public function update(Request $request, User $user)
     {
-        //
+        
+
         // $user = User::findOrFail($id);
         $rules = [
             'email' => 'email|unique:users,email,' . $user->id,
@@ -103,6 +111,7 @@ class UserController extends ApiController
         }
 
         if($request->has('admin')) {
+            $this->allowAdminActions();
             if(!$user->isVerified()) {
                 return $this->errorResponse('Only verified users can modify the admin field', 409);
             }

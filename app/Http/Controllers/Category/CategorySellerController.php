@@ -18,6 +18,8 @@ class CategorySellerController extends ApiController
      */
     public function index(Category $category)
     {
+        $this->allowAdminActions();
+        
         $sellers = $category->products()->with('seller')
         ->get()
         ->pluck('seller')
